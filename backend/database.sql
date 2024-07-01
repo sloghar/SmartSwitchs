@@ -1,0 +1,67 @@
+CREATE DATABASE smart_switchs;
+
+\c smart_switchs;
+
+CREATE TABLE roles (
+    id SMALLSERIAL,
+    role VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+INSERT INTO roles (role) VALUES ('client') , ('admin');
+
+CREATE TABLE users (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    first_name VARCHAR(25) NOT NULL,
+    last_name VARCHAR(25) NOT NULL,
+    email VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role_id SMALLINT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT users_role_id
+    FOREIGN KEY (role_id) REFERENCES roles (id)
+);
+
+CREATE TABLE modes (
+    id SMALLSERIAL,
+    mode VARCHAR(25) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+INSERT INTO modes (mode) VALUES ('switch') , ('schedule');
+
+CREATE TABLE switchs (
+    id SERIAL,
+    user_id uuid NOT NULL,
+    mac_address VARCHAR(17) NOT NULL UNIQUE,
+    mode_id SMALLINT NOT NULL DEFAULT 1, 
+    state BOOLEAN NOT NULL DEFAULT FALSE,
+    last_communication TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_updated BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT switchs_user_id
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT switchs_mode_id
+    FOREIGN KEY (mode_id) REFERENCES modes (id) ON DELETE CASCADE
+);
+
+CREATE TABLE schedules (
+    id SERIAL,
+    switch_id INTEGER NOT NULL,
+    days SMALLINT NOT NULL DEFAULT 0,
+    start_at TIME NOT NULL,
+    end_at TIME NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT schedules_switch_id
+    FOREIGN KEY (switch_id) REFERENCES switchs (id) ON DELETE CASCADE
+);
